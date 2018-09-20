@@ -18,7 +18,7 @@ class Pazaak_Card
 {
 public:
 	int value;
-	bool beenPlayed, hasSpecialAction;
+	bool beenPlayed = false, hasSpecialAction = false;
 	CardType type;
 	std::string name;
 

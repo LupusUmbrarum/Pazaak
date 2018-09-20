@@ -53,7 +53,7 @@ Pazaak_Card_PoM::Pazaak_Card_PoM(int value) : Pazaak_Card()
 	hasSpecialAction = true;
 	type = PLUSORMINUS;
 	name = "Plus or Minus 1 or 2";
-	beenPlayed = false;
+	//beenPlayed = false;
 }
 
 int Pazaak_Card_PoM::play(int &sum, Pazaak_Card *cards[], int length)
@@ -116,7 +116,7 @@ Pazaak_Card_Flip::Pazaak_Card_Flip(int value) : Pazaak_Card(2)
 
 	hasSpecialAction = true;
 	type = FLIP;
-	beenPlayed = false;
+	//beenPlayed = false;
 	
 	if (abs(this->value) % 3 == 0)
 	{
@@ -156,7 +156,7 @@ Pazaak_Card_Double::Pazaak_Card_Double() : Pazaak_Card(0)
 	type = DOUBLE;
 	value = 0;
 	name = "Double";
-	beenPlayed = false;
+	//beenPlayed = false;
 }
 
 int Pazaak_Card_Double::play(int &sum, Pazaak_Card *cards[], int length)
@@ -169,5 +169,5 @@ Pazaak_Card_TieBreaker::Pazaak_Card_TieBreaker() : Pazaak_Card(0)
 {
 	type = TIEBREAKER;
 	name = "Tie-Breaker";
-	beenPlayed = false;
+	//beenPlayed = false;
 }
