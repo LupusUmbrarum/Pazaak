@@ -140,7 +140,7 @@ int Pazaak_Card_Flip::play(int &sum, Pazaak_Card *cards[], int length)
 
 		while (x < length)
 		{
-			if (cards[x]->beenPlayed && cards[x] != this && cards[x]->type != FLIP && abs(cards[x]->value) == value || abs(cards[x]->value) == value * 2)
+			if (cards[x] != this && cards[x]->type != FLIP && abs(cards[x]->value) == value || abs(cards[x]->value) == value * 2)
 			{
 				sum += (-1 * cards[x]->value);
 			}
