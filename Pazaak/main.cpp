@@ -3,10 +3,437 @@
 #include<string>
 #include<cstdlib> // rand, srand
 #include<time.h>
+#include<Windows.h>
+#include<Wincon.h>
+
 #include "pazaak_card.h"
 
 #define clearScreen system("cls")
 #define charOffset 48
+#define setTextGreen system("color 02")
+#define setTextRed system("color 04")
+#define setTextBlue system("color 01")
+#define setTextYellow system("color 06")
+#define setTextGray system("color 08")
+#define setTextDefault setColorByType((CardType)999)
+
+void setColorByType(CardType type)
+{
+	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+
+	switch (type)
+	{
+	case REGULAR:
+	{
+		SetConsoleTextAttribute(hConsole, 10);
+		break;
+	}
+	case PLUS:
+	{
+		SetConsoleTextAttribute(hConsole, 9);
+		break;
+	}
+	case MINUS:
+	{
+		SetConsoleTextAttribute(hConsole, 12);
+		break;
+	}
+	case PLUSORMINUS:
+	{
+		SetConsoleTextAttribute(hConsole, 8);
+		break;
+	}
+	case FLIP:
+	case DOBLE:
+	case TIEBREAKER:
+	{
+		SetConsoleTextAttribute(hConsole, 14);
+		break;
+	}
+	default:
+	{
+		SetConsoleTextAttribute(hConsole, 15);
+		break;
+	}
+	}
+}
+
+void printShortCardName(Pazaak_Card *card)
+{
+	setColorByType(card->type);
+
+	std::string str = "";
+
+	switch (card->type)
+	{
+	case REGULAR:
+	{
+		str = "  " + std::to_string(card->value);
+		break;
+	}
+	case PLUS:
+	{
+		str += " +" + std::to_string(card->value);
+		break;
+	}
+	case MINUS:
+	{
+		str += " " + std::to_string(card->value);
+		break;
+	}
+	case PLUSORMINUS:
+	{
+		if (card->beenPlayed)
+		{
+			if (card->value > 0)
+			{
+				str = " +" + std::to_string(card->value);
+			}
+			else
+			{
+				str = std::to_string(card->value);
+			}
+		}
+		else
+		{
+			str = "+/- 1/2";
+		}
+		break;
+	}
+	case FLIP:
+	{
+		str = "F " + std::to_string(card->value) + "s&" + std::to_string(card->value*2) +"s";
+		break;
+	}
+	case DOBLE:
+	{
+		str = "2x last";
+		break;
+	}
+	case TIEBREAKER:
+	{
+		str = "Tie-Bre";
+		break;
+	}
+	default:
+	{
+		str = "       ";
+		break;
+	}
+	}
+
+	while (str.size() < 7)
+	{
+		str += " ";
+	}
+	std::cout << str;
+}
+
+void printHorizontalBorderByType(CardType type)
+{
+	setColorByType(type);
+
+	std::cout << "---------";
+	setTextDefault;
+}
+
+void printVerticalBorderByType(CardType type)
+{
+	setColorByType(type);
+
+	std::cout << "|       |";
+	setTextDefault;
+}
+
+void printCards(Pazaak_Card *cards[], int length, Pazaak_Card *oppCards[], int oppLength, int colCount, int rowCount, bool shouldDraw)
+{
+	int xMax = rowCount;
+	int yMax = colCount;
+	std::string seperator = "   |  ";
+	std::string pusher = "";
+
+	if (rowCount > 1)
+	{
+		pusher = "          ";
+	}
+
+	for (int x = 0; x < xMax; x++)
+	{
+		std::cout << pusher;
+
+		// print 3 top borders for player
+		for (int y = 0; y < yMax; y++)
+		{
+			setTextDefault;
+			std::cout << " ";
+
+			if (x * xMax + y < length)
+			{
+				if (!shouldDraw && cards[x * xMax + y]->beenPlayed)
+				{
+					printHorizontalBorderByType((CardType)999);
+				}
+				else
+				{
+					printHorizontalBorderByType(cards[x * xMax + y]->type);
+				}
+			}
+			else
+			{
+				printHorizontalBorderByType((CardType)999);
+			}
+		}
+
+		setTextDefault;
+		std::cout << seperator;
+
+		// print 3 top borders for npc
+		for (int y = 0; y < yMax; y++)
+		{
+			setTextDefault;
+			std::cout << " ";
+
+			if (!shouldDraw)
+			{
+				printHorizontalBorderByType((CardType)999);
+			}
+			else
+			{
+				if (x * xMax + y < oppLength)
+				{
+					printHorizontalBorderByType(oppCards[x * xMax + y]->type);
+				}
+				else
+				{
+					printHorizontalBorderByType((CardType)999);
+				}
+			}
+		}
+
+		std::cout << "\n";
+		std::cout << pusher;
+
+		// print 3 upper mid borders for player
+		for (int y = 0; y < yMax; y++)
+		{
+			setTextDefault;
+			std::cout << " ";
+			if (x * xMax + y < length)
+			{
+				if (!shouldDraw && cards[x * xMax + y]->beenPlayed)
+				{
+					printVerticalBorderByType((CardType)999);
+				}
+				else
+				{
+					printVerticalBorderByType(cards[x * xMax + y]->type);
+				}
+			}
+			else
+			{
+				printVerticalBorderByType((CardType)999);
+			}
+		}
+
+		setTextDefault;
+		std::cout << seperator;
+
+		// print 3 upper mid borders for npc
+		for (int y = 0; y < yMax; y++)
+		{
+			setTextDefault;
+			std::cout << " ";
+
+			if (!shouldDraw)
+			{
+				printVerticalBorderByType((CardType)999);
+			}
+			else
+			{
+				if (x * xMax + y < oppLength)
+				{
+					printVerticalBorderByType(oppCards[x * xMax + y]->type);
+				}
+				else
+				{
+					printVerticalBorderByType((CardType)999);
+				}
+			}
+		}
+
+		std::cout << "\n";
+		std::cout << pusher;
+
+		// print 3 mid sections for player
+		for (int y = 0; y < yMax; y++)
+		{
+			setTextDefault;
+			std::cout << " ";
+
+			if (x * xMax + y < length)
+			{
+				if (!shouldDraw && cards[x * xMax + y]->beenPlayed)
+				{
+					setColorByType((CardType)999);
+					std::cout << "|";
+					std::cout << "       ";
+				}
+				else
+				{
+					setColorByType(cards[x * xMax + y]->type);
+					std::cout << "|";
+					printShortCardName(cards[x * xMax + y]);
+				}
+				std::cout << "|";
+			}
+			else
+			{
+				printVerticalBorderByType((CardType)999);
+			}
+			//std::cout << "|";
+		}
+
+		setTextDefault;
+		std::cout << seperator;
+
+		// print 3 mid sections for npc
+		for (int y = 0; y < yMax; y++)
+		{
+			setTextDefault;
+			if (!shouldDraw)
+			{
+				setColorByType((CardType)999);
+				std::cout << " |";
+				std::cout << "       ";
+			}
+			else
+			{
+				if (x * xMax + y < oppLength)
+				{
+					setColorByType(oppCards[x * xMax + y]->type);
+					std::cout << " |";
+					printShortCardName(oppCards[x * xMax + y]);
+				}
+				else
+				{
+					setColorByType((CardType)999);
+					std::cout << " |";
+					std::cout << "       ";
+				}
+			}
+
+			std::cout << "|";
+		}
+
+		std::cout << "\n";
+		std::cout << pusher;
+
+		// print 3 lower mid borders for player
+		for (int y = 0; y < yMax; y++)
+		{
+			setTextDefault;
+			std::cout << " ";
+
+			if (x * xMax + y < length)
+			{
+				if (!shouldDraw && cards[x * xMax + y]->beenPlayed)
+				{
+					printVerticalBorderByType((CardType)999);
+				}
+				else
+				{
+					printVerticalBorderByType(cards[x * xMax + y]->type);
+				}
+			}
+			else
+			{
+				printVerticalBorderByType((CardType)999);
+			}
+		}
+
+		setTextDefault;
+		std::cout << seperator;
+
+		// print 3 lower mid borders for npc
+		for (int y = 0; y < yMax; y++)
+		{
+			setTextDefault;
+			std::cout << " ";
+
+			if (!shouldDraw)
+			{
+				printVerticalBorderByType((CardType)999);
+			}
+			else
+			{
+				if (x * xMax + y < oppLength)
+				{
+					printVerticalBorderByType(oppCards[x * xMax + y]->type);
+				}
+				else
+				{
+					printVerticalBorderByType((CardType)999);
+				}
+			}
+		}
+
+		std::cout << "\n";
+		std::cout << pusher;
+
+		// print 3 bottom borders for player
+		for (int y = 0; y < yMax; y++)
+		{
+			setTextDefault;
+			std::cout << " ";
+			
+			if (x * xMax + y < length)
+			{
+				if (!shouldDraw && cards[x * xMax + y]->beenPlayed)
+				{
+					printHorizontalBorderByType((CardType)999);
+				}
+				else
+				{
+					printHorizontalBorderByType(cards[x * xMax + y]->type);
+				}
+			}
+			else
+			{
+				printHorizontalBorderByType((CardType)999);
+			}
+		}
+
+		setTextDefault;
+		std::cout << seperator;
+
+		// print 3 bottom borders for npc
+		for (int y = 0; y < yMax; y++)
+		{
+			setTextDefault;
+			std::cout << " ";
+
+			if (!shouldDraw)
+			{
+				printHorizontalBorderByType((CardType)999);
+			}
+			else
+			{
+				if (x * xMax + y < oppLength)
+				{
+					printHorizontalBorderByType(oppCards[x * xMax + y]->type);
+				}
+				else
+				{
+					printHorizontalBorderByType((CardType)999);
+				}
+			}
+		}
+
+		std::cout << "\n";
+	}
+
+	setTextDefault;
+}
 
 Pazaak_Card * getRandomCard()
 {
@@ -98,7 +525,7 @@ Pazaak_Card * makeCard(std::string msg, std::string options, int minSelect, int 
 		{
 			return new Pazaak_Card_Flip(value);
 		}
-		case DOUBLE:
+		case DOBLE:
 		{
 			return new Pazaak_Card_Double();
 		}
@@ -155,7 +582,7 @@ void makeSideDeck(Pazaak_Card *deck[])
 		}
 		case '5':
 		{
-			deck[numLeft] = makeCard("Are you sure you want a 'double' card?", "(1) Yes\n(2) No\n", '1', '2', '2', DOUBLE);
+			deck[numLeft] = makeCard("Are you sure you want a 'double' card?", "(1) Yes\n(2) No\n", '1', '2', '2', DOBLE);
 			break;
 		}
 		case '6':
@@ -187,12 +614,22 @@ int hasCardType(Pazaak_Card * cards[], int length, CardType type)
 	return -1;
 }
 
+int playCard(Pazaak_Card *hand[], int index, int& numCardsPlayed, int& sum, Pazaak_Card *cardsPlayed[])
+{
+	int val = -1;
+	val = hand[index]->play(sum, cardsPlayed, numCardsPlayed);
+	cardsPlayed[numCardsPlayed++] = hand[index];
+	hand[index]->beenPlayed = true;
+	return val;
+}
+
 void roboPlayPazaak(bool &stay, bool oppStay, int &sum, int oppSum, Pazaak_Card * hand[], Pazaak_Card * cardsPlayed[], int &numCardsPlayed)
 {
 	bool hasPlayedCard = false;
 	bool turnEnded = false;
 	while (!turnEnded && !stay)
 	{
+		std::cout << "entered robot\n";
 		if (oppStay)
 		{
 			if (sum > oppSum)
@@ -212,6 +649,7 @@ void roboPlayPazaak(bool &stay, bool oppStay, int &sum, int oppSum, Pazaak_Card 
 							{
 								if (hand[x]->value + sum <= 20 && hand[x]->value + sum > oppSum)
 								{
+									//playCard(hand, x, numCardsPlayed, sum, cardsPlayed);
 									hand[x]->play(sum, cardsPlayed, numCardsPlayed);
 									cardsPlayed[numCardsPlayed++] = hand[x];
 									hand[x]->beenPlayed = true;
@@ -222,25 +660,28 @@ void roboPlayPazaak(bool &stay, bool oppStay, int &sum, int oppSum, Pazaak_Card 
 							}
 							else if (hand[x]->type == PLUSORMINUS)
 							{
-								int total = sum - hand[x]->value;
+								int total = sum - 2;
 
 								if (total <= 20 && total > oppSum)
 								{
 									sum -= 2;
 									cardsPlayed[numCardsPlayed++] = hand[x];
 									hand[x]->beenPlayed = true;
+									hand[x]->value = -2;
 
 									hasPlayedCard = true;
 									stay = true;
+									break;
 								}
 
-								total = sum - hand[x]->value / 2;
+								total = sum - 1;
 
 								if (total <= 20 && total > oppSum)
 								{
 									sum -= 1;
 									cardsPlayed[numCardsPlayed++] = hand[x];
 									hand[x]->beenPlayed = true;
+									hand[x]->value = -1;
 
 									hasPlayedCard = true;
 									stay = true;
@@ -258,7 +699,7 @@ void roboPlayPazaak(bool &stay, bool oppStay, int &sum, int oppSum, Pazaak_Card 
 			{
 				int hct = hasCardType(hand, 4, TIEBREAKER);
 
-				if (hct > 0)
+				if (hct > -1)
 				{
 					hand[hct]->play(sum, cardsPlayed, numCardsPlayed);
 					cardsPlayed[numCardsPlayed++] = hand[hct];
@@ -282,7 +723,7 @@ void roboPlayPazaak(bool &stay, bool oppStay, int &sum, int oppSum, Pazaak_Card 
 						case REGULAR:
 						case PLUS:
 						{
-							if (sum + hand[x]->value > oppSum && sum + hand[x]->value <= 20)
+							if (sum + hand[x]->value >= oppSum && sum + hand[x]->value <= 20)
 							{
 								hand[x]->play(sum, cardsPlayed, numCardsPlayed);
 								cardsPlayed[numCardsPlayed++] = hand[x];
@@ -294,34 +735,36 @@ void roboPlayPazaak(bool &stay, bool oppStay, int &sum, int oppSum, Pazaak_Card 
 						}
 						case PLUSORMINUS:
 						{
-							int total = sum + hand[x]->value;
+							int total = sum + 2;
 
-							if (total <= 20 && total > oppSum)
+							if (total <= 20 && total >= oppSum)
 							{
 								sum += 2;
 								cardsPlayed[numCardsPlayed++] = hand[x];
 								hand[x]->beenPlayed = true;
+								hand[x]->value = 2;
 
 								hasPlayedCard = true;
 								break;
 							}
 
-							total = sum + hand[x]->value / 2;
+							total = sum + 1;
 
-							if (total <= 20 && total > oppSum)
+							if (total <= 20 && total >= oppSum)
 							{
 								sum += 1;
 								cardsPlayed[numCardsPlayed++] = hand[x];
 								hand[x]->beenPlayed = true;
+								hand[x]->value = 1;
 
 								hasPlayedCard = true;
 							}
 
 							break;
 						}
-						case DOUBLE:
+						case DOBLE:
 						{
-							if (sum + cardsPlayed[numCardsPlayed]->value > oppSum && sum + cardsPlayed[numCardsPlayed]->value <= 20)
+							if (sum + cardsPlayed[numCardsPlayed-1]->value >= oppSum && sum + cardsPlayed[numCardsPlayed-1]->value <= 20)
 							{
 								hand[x]->play(sum, cardsPlayed, numCardsPlayed);
 								cardsPlayed[numCardsPlayed++] = hand[x];
@@ -337,7 +780,7 @@ void roboPlayPazaak(bool &stay, bool oppStay, int &sum, int oppSum, Pazaak_Card 
 							int flipSum = sum;
 							hand[x]->play(flipSum, cardsPlayed, numCardsPlayed);
 
-							if (flipSum > oppSum && flipSum <= 20)
+							if (flipSum >= oppSum && flipSum <= 20)
 							{
 								cardsPlayed[numCardsPlayed++] = hand[x];
 								
@@ -354,7 +797,7 @@ void roboPlayPazaak(bool &stay, bool oppStay, int &sum, int oppSum, Pazaak_Card 
 					}// end if(!hand[x]->beenPlayed)
 				}// end for(int x = 0; x < 4 && !hasPlayedCard; x++)
 
-				if (sum > oppSum)
+				if (sum >= oppSum && hasPlayedCard)
 				{
 					stay = true;
 				}
@@ -366,16 +809,97 @@ void roboPlayPazaak(bool &stay, bool oppStay, int &sum, int oppSum, Pazaak_Card 
 			turnEnded = true;
 
 		}// end if(oppStay)
-		else// keep playing even though the player stopped
+		else// keep playing while player hasn't stopped
 		{
-			if (sum == 20)
+			if (sum > 20)
 			{
-				stay = true;
-			}
-			else if (sum < 20 && sum > 16)// if sum is between 17 and 19 inclusive
+				for (int x = 0; x < 4 && !hasPlayedCard; x++)
+				{
+					if (!hand[x]->beenPlayed)
+					{
+						if (hand[x]->type == MINUS)
+						{
+							if (hand[x]->value + sum <= 20 && hand[x]->value + sum > oppSum)
+							{
+								hand[x]->play(sum, cardsPlayed, numCardsPlayed);
+								cardsPlayed[numCardsPlayed++] = hand[x];
+								hand[x]->beenPlayed = true;
+
+								hasPlayedCard = true;
+								stay = true;
+							}
+						}
+						else if (hand[x]->type == PLUSORMINUS)
+						{
+							int total = sum - 2;
+
+							if (total <= 20 && total > oppSum)
+							{
+								sum -= 2;
+								cardsPlayed[numCardsPlayed++] = hand[x];
+								hand[x]->beenPlayed = true;
+								hand[x]->value = -2;
+
+								hasPlayedCard = true;
+								stay = true;
+							}
+
+							total = sum - 1;
+
+							if (total <= 20 && total > oppSum)
+							{
+								sum -= 1;
+								cardsPlayed[numCardsPlayed++] = hand[x];
+								hand[x]->beenPlayed = true;
+								hand[x]->value = -1;
+
+								hasPlayedCard = true;
+								stay = true;
+							}
+						}
+					}// end if(!hand[x]->beenPlayed)
+				}// end for(int x = 0; x < 4 && !hasPlayedCard; x++)
+			}// end if(sum > 20)
+			else
 			{
-				int keepgoing = rand() % 2;
-				stay = keepgoing;
+				int rnd = rand() % 100;
+
+				switch (sum)
+				{
+				case 20:
+				{
+					stay = true;
+
+					int hct = hasCardType(hand, 4, TIEBREAKER);
+
+					if (hct > -1 && !hasPlayedCard)
+					{
+						hand[hct]->play(sum, cardsPlayed, numCardsPlayed);
+						cardsPlayed[numCardsPlayed++] = hand[hct];
+						hand[hct]->beenPlayed = true;
+
+						hasPlayedCard = true;
+					}
+					break;
+				}
+				case 19:
+				{
+					stay = rnd > 24;// 75% chance to stay
+					break;
+				}
+				case 18:
+				{
+					stay = rnd > 32;// 66% chance to stay
+					break;
+				}
+				case 17:
+				{
+					stay = rnd > 49;// 50% chance to stay
+					break;
+				}
+				case 16:
+					stay = rnd > 84;// 15% chance to stay
+				}
 			}
 
 			turnEnded = true;
@@ -386,7 +910,7 @@ void roboPlayPazaak(bool &stay, bool oppStay, int &sum, int oppSum, Pazaak_Card 
 void playerPlayPazaak(bool &stay, int &sum, Pazaak_Card * hand[], Pazaak_Card * cardsDown[], int &cardsPlayed)
 {
 	//print cards
-
+	std::cout << "\n";
 	for (int x = 0; x < 4; x++)
 	{
 		if (!hand[x]->beenPlayed)
@@ -397,7 +921,7 @@ void playerPlayPazaak(bool &stay, int &sum, Pazaak_Card * hand[], Pazaak_Card * 
 	std::cout << "\n";
 
 	//let the player play
-	bool playCard = true;
+	bool hasNotPlayedCard = true;
 	int numCardsPlayed = 0;
 	int choice = 0;
 	bool continueOn = true;
@@ -408,7 +932,7 @@ void playerPlayPazaak(bool &stay, int &sum, Pazaak_Card * hand[], Pazaak_Card * 
 			numCardsPlayed += hand[x]->beenPlayed;
 		}
 		std::cout << "\n(1) End turn\n(2) Stay\n";
-		if (playCard && numCardsPlayed < 4)
+		if (hasNotPlayedCard && numCardsPlayed < 4)
 		{
 			std::cout << "(3) Play card\n";
 		}
@@ -427,7 +951,7 @@ void playerPlayPazaak(bool &stay, int &sum, Pazaak_Card * hand[], Pazaak_Card * 
 			stay = true;
 			continueOn = false;
 		}
-		else if (choice == '3' && numCardsPlayed < 4 && playCard)
+		else if (choice == '3' && numCardsPlayed < 4 && hasNotPlayedCard)
 		{
 			int numCardsInHand = 0;
 			std::cout << "Which card do you want to play?";
@@ -441,12 +965,19 @@ void playerPlayPazaak(bool &stay, int &sum, Pazaak_Card * hand[], Pazaak_Card * 
 				}
 			}
 
-			std::cout << "\n";
+			std::cout << "\n(b) to cancel\n";
 
 			int cardChoice = 0;
-			while (cardChoice < '1' || cardChoice > '4')
+			while ((cardChoice < '1' || cardChoice > '4') && cardChoice != 'b')
 			{
 				cardChoice = _getch();
+			}
+
+			if (cardChoice == 'b')
+			{
+				cardChoice = 0;
+				choice = 0;
+				continue;
 			}
 
 			cardChoice -= charOffset;
@@ -462,7 +993,7 @@ void playerPlayPazaak(bool &stay, int &sum, Pazaak_Card * hand[], Pazaak_Card * 
 				hand[cardChoice]->play(sum, cardsDown, cardsPlayed);
 				cardsDown[cardsPlayed++] = hand[cardChoice];
 				hand[cardChoice]->beenPlayed = true;
-				playCard = false;
+				hasNotPlayedCard = false;
 				choice = 0;
 			}
 		}
@@ -495,17 +1026,20 @@ void playPazaak()
 		Pazaak_Card * npcHand[4];
 		Pazaak_Card * mainDeck[40];
 
+		// make the deck
 		for (int x = 0; x < 4; x++)
 		{
 			for (int y = 0; y < 10; y++)
 			{
 				mainDeck[x * 10 + y] = new Pazaak_Card(y + 1);
+				mainDeck[x * 10 + y]->type = REGULAR;
 			}
 		}
 
 		//load both players' hands
 		for (int x = 0; x < 4; x++)
 		{
+			// load player's hand
 			int handIndex = rand() % 10;
 			while (sideDeck[handIndex]->beenPlayed)
 			{
@@ -514,11 +1048,12 @@ void playPazaak()
 			hand[x] = sideDeck[handIndex];
 			sideDeck[handIndex]->beenPlayed = true;
 
+			// load npc's hand
 			while (npcSideDeck[handIndex]->beenPlayed)
 			{
 				handIndex = rand() % 10;
 			}
-			npcHand[x] = sideDeck[handIndex];
+			npcHand[x] = npcSideDeck[handIndex];
 			npcSideDeck[handIndex]->beenPlayed = true;
 		}
 
@@ -564,15 +1099,21 @@ void playPazaak()
 				if (!p1Stay)
 				{
 					p1Sum += mainDeck[index]->value;
-					std::cout << "Player 1s new card: " << mainDeck[index]->value << "\n";
+					//std::cout << "Player 1s new card: " << mainDeck[index]->value << "\n";
 					cardsDownP1[p1CardsPlayed++] = mainDeck[index++];
 				}
 				if (!p2Stay)
 				{
 					p2Sum += mainDeck[index]->value;
-					std::cout << "Player 2s new card: " << mainDeck[index]->value << "\n";
+					//std::cout << "Player 2s new card: " << mainDeck[index]->value << "\n";
 					cardsDownP2[p2CardsPlayed++] = mainDeck[index++];
 				}
+
+				// print cards on board
+				printCards(cardsDownP1, p1CardsPlayed, cardsDownP2, p2CardsPlayed, 3, 3, true);
+
+				// print cards in hand
+				printCards(hand, 4, npcHand, 4, 4, 1, true);
 
 				std::cout << "Player 1 Total: " << p1Sum << "\nPlayer 2 Total: " << p2Sum << "\n";
 
@@ -588,6 +1129,8 @@ void playPazaak()
 			}//end while(((!p1Stay || !p2Stay) && (p1Sum <= 20 && p2Sum <= 20) && (p1CardsPlayed < 9 && p2CardsPlayed < 9))
 
 			clearScreen;
+
+			printCards(cardsDownP1, p1CardsPlayed, cardsDownP2, p2CardsPlayed, 3, 3, true);
 
 			std::cout << "final sums: " << p1Sum << " & " << p2Sum << "\n";
 
@@ -644,26 +1187,28 @@ void playPazaak()
 					//does either player have the tiebreaker card and did they play it?
 					for (int x = 0; x < 4; x++)
 					{
-						if (sideDeck[x]->type == TIEBREAKER && sideDeck[x]->beenPlayed)
+						if (sideDeck[x]->type == TIEBREAKER && sideDeck[x]->beenPlayed && ((Pazaak_Card_TieBreaker*)sideDeck[x])->wasPlayedThisRound)
 						{
 							std::cout << "Player 1 used a Tie-Breaker card and won!\n";
 							p1Score++;
 							hadTB = true;
+							((Pazaak_Card_TieBreaker*)sideDeck[x])->wasPlayedThisRound = false;
 							break;
 						}
 
-						if (npcSideDeck[x]->type == TIEBREAKER && npcSideDeck[x]->beenPlayed)
+						if (npcSideDeck[x]->type == TIEBREAKER && npcSideDeck[x]->beenPlayed && ((Pazaak_Card_TieBreaker*)sideDeck[x])->wasPlayedThisRound)
 						{
 							std::cout << "Player 2 used a Tie-Breaker card and won!\n";
 							p2Score++;
 							hadTB = true;
+							((Pazaak_Card_TieBreaker*)sideDeck[x])->wasPlayedThisRound = false;
 							break;
 						}
 					}
 
 					if (!hadTB)
 					{
-						std::cout << "You both lose!\n";
+						std::cout << "It's a tie!\n";
 					}
 				}
 			}
@@ -690,6 +1235,7 @@ void playPazaak()
 		system("pause");
 		clearScreen;
 
+		// clear hands for next round
 		for (int x = 0; x < 10; x++)
 		{
 			sideDeck[x]->beenPlayed = false;
@@ -746,6 +1292,8 @@ void playPazaak()
 int main()
 {
 	std::srand((unsigned int)time(NULL));
+
+	SetConsoleDisplayMode(GetStdHandle(STD_OUTPUT_HANDLE), CONSOLE_FULLSCREEN_MODE, 0);
 
 	playPazaak();
 

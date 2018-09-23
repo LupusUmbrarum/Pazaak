@@ -14,10 +14,12 @@ Pazaak_Card::Pazaak_Card(int value)
 	if (value < 0)
 	{
 		name = "Minus " + std::to_string(abs(value));
+		type = MINUS;
 	}
 	else
 	{
 		name = "Plus " + std::to_string(value);
+		type = PLUS;
 	}
 }
 
@@ -53,7 +55,6 @@ Pazaak_Card_PoM::Pazaak_Card_PoM(int value) : Pazaak_Card()
 	hasSpecialAction = true;
 	type = PLUSORMINUS;
 	name = "Plus or Minus 1 or 2";
-	//beenPlayed = false;
 }
 
 int Pazaak_Card_PoM::play(int &sum, Pazaak_Card *cards[], int length)
@@ -72,21 +73,25 @@ int Pazaak_Card_PoM::play(int &sum, Pazaak_Card *cards[], int length)
 		{
 		case '1':
 		{
+			value = 1;
 			sum += 1;
 			break;
 		}
 		case '2':
 		{
+			value = 2;
 			sum += 2;
 			break;
 		}
 		case '3':
 		{
+			value = -1;
 			sum -= 1;
 			break;
 		}
 		case '4':
 		{
+			value = -2;
 			sum -= 2;
 			break;
 		}
@@ -116,7 +121,6 @@ Pazaak_Card_Flip::Pazaak_Card_Flip(int value) : Pazaak_Card(2)
 
 	hasSpecialAction = true;
 	type = FLIP;
-	//beenPlayed = false;
 	
 	if (abs(this->value) % 3 == 0)
 	{
@@ -153,10 +157,9 @@ int Pazaak_Card_Flip::play(int &sum, Pazaak_Card *cards[], int length)
 Pazaak_Card_Double::Pazaak_Card_Double() : Pazaak_Card(0)
 {
 	hasSpecialAction = true;
-	type = DOUBLE;
+	type = DOBLE;
 	value = 0;
 	name = "Double";
-	//beenPlayed = false;
 }
 
 int Pazaak_Card_Double::play(int &sum, Pazaak_Card *cards[], int length)
@@ -169,5 +172,11 @@ Pazaak_Card_TieBreaker::Pazaak_Card_TieBreaker() : Pazaak_Card(0)
 {
 	type = TIEBREAKER;
 	name = "Tie-Breaker";
-	//beenPlayed = false;
+}
+
+int Pazaak_Card_TieBreaker::play(int &sum, Pazaak_Card *cards[], int length)
+{
+	wasPlayedThisRound = true;
+	beenPlayed = true;
+	return 0;
 }

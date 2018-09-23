@@ -10,14 +10,14 @@ enum CardType
 	MINUS,
 	PLUSORMINUS,
 	FLIP,
-	DOUBLE,
+	DOBLE,
 	TIEBREAKER
 };
 
 class Pazaak_Card
 {
 public:
-	int value;
+	int value = 0;
 	bool beenPlayed = false, hasSpecialAction = false;
 	CardType type;
 	std::string name;
@@ -57,6 +57,8 @@ public:
 class Pazaak_Card_TieBreaker : public Pazaak_Card
 {
 public:
+	bool wasPlayedThisRound = false;
 
 	Pazaak_Card_TieBreaker();
+	virtual int play(int&, Pazaak_Card*[], int);
 };
