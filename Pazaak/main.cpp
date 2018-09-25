@@ -5,6 +5,7 @@
 #include<time.h>
 #include<Windows.h>
 #include<Wincon.h>
+#include<thread>
 
 #include "pazaak_card.h"
 
@@ -541,17 +542,17 @@ Pazaak_Card * makeCard(std::string msg, std::string options, int minSelect, int 
 	}
 }
 
-void makeSideDeck(Pazaak_Card *deck[])
+bool makeSideDeck(Pazaak_Card *deck[])
 {
 	int numLeft = 0;
 
 	while (numLeft < 10)
 	{
 		clearScreen;
-		std::cout << "Select " << 10 - numLeft << " cards to add to your side deck\n(1) Add\n(2) Subtract\n(3) Add/Subtract\n(4) Flip\n(5) Double\n(6) Tiebreaker\n";
+		std::cout << "Select " << 10 - numLeft << " cards to add to your side deck\n(1) Add\n(2) Subtract\n(3) Add/Subtract\n(4) Flip\n(5) Double\n(6) Tiebreaker\n(7) Quit\n";
 
 		int choice = 0;
-		while (choice < '1' || choice > '6')
+		while (choice < '1' || choice > '7')
 		{
 			choice = _getch();
 		}
@@ -590,6 +591,16 @@ void makeSideDeck(Pazaak_Card *deck[])
 			deck[numLeft] = makeCard("Are you sure you want a 'tiebreaker' card?", "(1) Yes\n(2) No\n", '1', '2', '2', TIEBREAKER);
 			break;
 		}
+		case '7':
+		{
+			// clear memory
+			for (int x = 0; x < numLeft; x++)
+			{
+				delete deck[x];
+			}
+
+			return false;
+		}
 		}
 
 		if (deck[numLeft] == NULL)
@@ -599,6 +610,8 @@ void makeSideDeck(Pazaak_Card *deck[])
 
 		numLeft++;
 	}
+
+	return true;
 }
 
 int hasCardType(Pazaak_Card * cards[], int length, CardType type)
@@ -632,7 +645,11 @@ void roboPlayPazaak(bool &stay, bool oppStay, int &sum, int oppSum, Pazaak_Card 
 	{
 		if (oppStay)
 		{
-			if (sum > oppSum)
+			if (oppSum > 20)
+			{
+				stay = true;
+			}
+			else if (sum > oppSum)
 			{
 				if (sum <= 20)
 				{
@@ -1024,72 +1041,7 @@ void playerPlayPazaak(bool &stay, int &sum, Pazaak_Card * hand[], Pazaak_Card * 
 			forfeit = true;
 		}
 		}
-		/*
-		if (choice == '1')
-		{
-			continueOn = false;
-		}
-		else if (choice == '2')
-		{
-			stay = true;
-			continueOn = false;
-		}
-		else if (choice == '3' && numCardsPlayed < 4 && hasNotPlayedCard)
-		{
-			int numCardsInHand = 0;
-			std::cout << "Which card do you want to play?";
-			int offset = 0;
-			for (int x = 0; x < 4; x++, offset++)
-			{
-				if (!hand[x]->beenPlayed)
-				{
-					std::cout << "\n(" << x + 1 << ") " << hand[x]->name;
-					numCardsInHand++;
-				}
-			}
-
-			std::cout << "\n(b) to cancel\n";
-
-			int cardChoice = 0;
-			while ((cardChoice < '1' || cardChoice > '4') && cardChoice != 'b')
-			{
-				cardChoice = _getch();
-			}
-
-			if (cardChoice == 'b')
-			{
-				cardChoice = 0;
-				choice = 0;
-				continue;
-			}
-
-			cardChoice -= charOffset;
-			cardChoice--;
-
-			if (hand[cardChoice]->beenPlayed)
-			{
-				choice = 0;
-				continue;
-			}
-			else
-			{
-				hand[cardChoice]->play(sum, cardsDown, cardsPlayed);
-				cardsDown[cardsPlayed++] = hand[cardChoice];
-				hand[cardChoice]->beenPlayed = true;
-				hasNotPlayedCard = false;
-				choice = 0;
-				
-				if (sum >= 20)
-				{
-					stay = true;
-				}
-			}
-		}
-		else
-		{
-			choice = 0;
-		}
-		*/
+		
 	}//end while(continueOn && !stay && !forfeit)
 
 	if (sum == 20)
@@ -1105,10 +1057,13 @@ void playPazaak()
 	Pazaak_Card * sideDeck[10];
 	Pazaak_Card * npcSideDeck[10];
 
-	//load player side deck
-	makeSideDeck(sideDeck);
+	// load player side deck. If player wants to exit while making side deck, stop playing pazaak
+	if (!(makeSideDeck(sideDeck)))
+	{
+		return;
+	}
 
-	//load npc side deck
+	// load npc side deck
 	for (int x = 0; x < 10; x++)
 	{
 		npcSideDeck[x] = getRandomCard();
@@ -1200,7 +1155,7 @@ void playPazaak()
 					printCards(cardsDownP1, p1CardsPlayed, cardsDownP2, p2CardsPlayed, 3, 3, true);
 
 					// print cards in hand
-					printCards(hand, 4, npcHand, 4, 4, 1, true);
+					printCards(hand, 4, npcHand, 4, 4, 1, false);
 
 					std::cout << "Player 1 Total: " << p1Sum << "\nPlayer 2 Total: " << p2Sum << "\n";
 
@@ -1233,7 +1188,7 @@ void playPazaak()
 			//determine the winner
 			if (forfeit)
 			{
-				std::cout << "Player 2 wins!\n";
+				std::cout << "Player 2 won the set\n";
 				p2Score = 3;
 				p1Score = -1;
 				break;
@@ -1244,13 +1199,13 @@ void playPazaak()
 				//if npc's total is less than or equal to 20
 				if (p2Sum <= 20)
 				{
-					std::cout << "Player 2 wins!\n";
+					std::cout << "Player 2 won the set\n";
 					p2Score++;
 				}
 				//else npc's total is greater than 20
 				else
 				{
-					std::cout << "You both lose!\n";
+					std::cout << "You both lose the set\n";
 				}
 			}
 			//if npc's total is greater than 20
@@ -1259,13 +1214,13 @@ void playPazaak()
 				//if player's total is less than or equal to 20
 				if (p1Sum <= 20)
 				{
-					std::cout << "Player 1 wins!\n";
+					std::cout << "Player 1 won the set\n";
 					p1Score++;
 				}
 				//else player's total is greater than 20
 				else
 				{
-					std::cout << "You both lose!\n";
+					std::cout << "You both lose\n";
 				}
 			}
 			else
@@ -1274,12 +1229,12 @@ void playPazaak()
 				{
 					if (p1Sum > p2Sum)
 					{
-						std::cout << "Player 1 wins!\n";
+						std::cout << "Player 1 won the set\n";
 						p1Score++;
 					}
 					else
 					{
-						std::cout << "Player 2 wins!\n";
+						std::cout << "Player 2 won the set\n";
 						p2Score++;
 					}
 				}
@@ -1294,7 +1249,7 @@ void playPazaak()
 						{
 							if (((Pazaak_Card_TieBreaker*)sideDeck[x])->wasPlayedThisRound)
 							{
-								std::cout << "Player 1 used a Tie-Breaker card and won!\n";
+								std::cout << "Player 1 used a Tie-Breaker card and won the set\n";
 								p1Score++;
 								hadTB = true;
 								((Pazaak_Card_TieBreaker*)sideDeck[x])->wasPlayedThisRound = false;
@@ -1306,7 +1261,7 @@ void playPazaak()
 						{
 							if (((Pazaak_Card_TieBreaker*)npcSideDeck[x])->wasPlayedThisRound)
 							{
-								std::cout << "Player 2 used a Tie-Breaker card and won!\n";
+								std::cout << "Player 2 used a Tie-Breaker card and won the set\n";
 								p2Score++;
 								hadTB = true;
 								((Pazaak_Card_TieBreaker*)npcSideDeck[x])->wasPlayedThisRound = false;
@@ -1317,7 +1272,7 @@ void playPazaak()
 
 					if (!hadTB)
 					{
-						std::cout << "It's a tie!\n";
+						std::cout << "It's a tie\n";
 					}
 				}
 			}
@@ -1340,7 +1295,7 @@ void playPazaak()
 			std::cout << 2;
 		}
 
-		std::cout << " wins!\n";
+		std::cout << " wins the match!\n";
 
 		system("pause");
 
